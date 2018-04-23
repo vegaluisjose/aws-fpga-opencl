@@ -8,6 +8,8 @@ aws_fpga_dir = $(abspath .)/aws-fpga
 aws_fpga_ver = b1ed5e951de3442ffb1fc8c7097e7064489e83f1
 aws_platform = xilinx_aws-vu9p-f1_1ddr-xpr-2pr_4_0
 
+export AWS_FPGA_REPO_DIR = $(aws_fpga_dir)
+
 bucket_name ?= fbit
 bucket_dir ?= ocl
 
@@ -48,7 +50,7 @@ afi_status:
 afi_delete:
 	aws ec2 --region us-west-2 delete-fpga-image --fpga-image-id $(afi_id)
 
-afi: $(out_dir)/$(kernel_name)
+afi: $(out_dir)/$(kernel_name).awsxclbin
 
 $(out_dir)/$(kernel_name).awsxclbin: $(out_dir)/$(kernel_name).xclbin
 	$(aws_fpga_dir)/SDAccel/tools/create_sdaccel_afi.sh \
