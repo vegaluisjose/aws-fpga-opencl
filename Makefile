@@ -9,6 +9,8 @@ aws_fpga_ver = b1ed5e951de3442ffb1fc8c7097e7064489e83f1
 aws_platform = xilinx_aws-vu9p-f1_1ddr-xpr-2pr_4_0
 
 export AWS_FPGA_REPO_DIR = $(aws_fpga_dir)
+export HDK_DIR = $(aws_fpga_dir)/hdk
+export HDK_SHELL_DIR = $(aws_fpga_dir)/hdk/common/shell_stable
 
 bucket_name ?= fbit
 bucket_dir ?= ocl
@@ -93,6 +95,7 @@ $(aws_fpga_dir):
 	git clone https://github.com/aws/aws-fpga.git $@
 	cd $@ && git checkout $(aws_fpga_ver) -b aws_hw_18
 	cd $@ && bash -c "source sdaccel_setup.sh"
+	cd $@ && bash -c "source hdk_setup.sh"
 
 clean:
 	-rm -rf *.dir $(run_dir) $(out_dir) *.txt *.tar *.bit *.bin *.xml to_aws $(aws_fpga_dir)
