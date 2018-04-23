@@ -2,15 +2,29 @@ aws_fpga_dir = $(abspath .)/aws-fpga
 aws_fpga_ver = b1ed5e951de3442ffb1fc8c7097e7064489e83f1
 aws_platform = xilinx_aws-vu9p-f1_1ddr-xpr-2pr_4_0
 
+bucket_name ?= fbit
+bucket_dir ?= ocl
+
 out_dir = $(abspath .)/out
 src_dir = $(abspath .)/src
 
 kernel_name = vadd
+host_name = host
 
 default: $(out_dir)/$(kernel_name).xclbin
 
-bucket_name ?= fbit
-bucket_dir ?= ocl
+build_host: $(out_dir)/$(host_name)
+
+$(out_dir)/$(host_name): $(src_dir)/$(host_name).cpp
+	xcpp -Wall -O0 -g \
+	-I$(XILINX_SDX)/runtime/include/1_2 \
+	-I$(aws_fpga_dir)/SDAccel/examples/xilinx/libs/xcl2 \
+	-lOpenCL -pthread \
+	-L$(XILINX_SDX)/runtime/lib/x86_64 \
+	-L$(XILINX_SDX)/lib/lnx64.o \
+	-o $@ \
+	$(aws_fpga_dir)/SDAccel/examples/xilinx/libs/xcl2/xcl2.cpp \
+	$<
 
 afi_status:
 	aws ec2 describe-fpga-images --fpga-image-ids afi-059bbfea3a06de54e
@@ -57,7 +71,7 @@ $(out_dir)/$(kernel_name).xo: $(src_dir)/$(kernel_name).cpp | $(aws_fpga_dir)
 $(aws_fpga_dir):
 	git clone https://github.com/aws/aws-fpga.git $@
 	cd $@ && git checkout $(aws_fpga_ver) -b aws_hw_18
-	bash -c "source $@/sdaccel_setup.sh"
+	cd $@ && bash -c "source sdaccel_setup.sh"
 
 clean:
 	-rm -rf *.dir
