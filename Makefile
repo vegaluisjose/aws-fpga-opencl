@@ -1,3 +1,9 @@
+# flow
+# 1. Build xclbin - make
+# 2. Generate AFI - make afi
+# 3. Check AFI status - make afi_status
+# 4. Compile host code - make build_host
+
 aws_fpga_dir = $(abspath .)/aws-fpga
 aws_fpga_ver = b1ed5e951de3442ffb1fc8c7097e7064489e83f1
 aws_platform = xilinx_aws-vu9p-f1_1ddr-xpr-2pr_4_0
@@ -11,7 +17,7 @@ src_dir = $(abspath .)/src
 kernel_name = vadd
 host_name = host
 
-default: $(out_dir)/$(kernel_name).xclbin
+default: xclbin
 
 build_host: $(out_dir)/$(host_name)
 
@@ -30,6 +36,8 @@ afi_status:
 	aws ec2 describe-fpga-images --fpga-image-ids afi-059bbfea3a06de54e
 
 afi: $(out_dir)/$(kernel_name)
+
+xclbin: $(out_dir)/$(kernel_name).xclbin
 
 $(out_dir)/$(kernel_name): $(out_dir)/$(kernel_name).xclbin
 	$(aws_fpga_dir)/SDAccel/tools/create_sdaccel_afi.sh \
