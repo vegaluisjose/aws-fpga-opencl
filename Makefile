@@ -1,8 +1,8 @@
 # flow
 # 1. Build xclbin - make
-# 2. Generate AFI - make afi
+# 2. Generate AFI - make afi_build
 # 3. Check AFI status - make afi_status
-# 4. Compile host code - make build_host
+# 4. Compile host code - make host_build
 
 aws_fpga_dir = $(abspath .)/aws-fpga
 aws_fpga_ver = b1ed5e951de3442ffb1fc8c7097e7064489e83f1
@@ -17,16 +17,22 @@ bucket_dir ?= ocl
 
 out_dir = $(abspath .)/out
 src_dir = $(abspath .)/src
-run_dir = $(abspath .)/run # FIXME required for non-4ddr-systems, due to a xilinx-aws-bug in xcl2
+
+# FIXME required for non-4ddr-systems, due to a xilinx-aws-bug in xcl2
+# xlc2 has a function for finding automatically awsxclbin file when
+# host is executed. the function is called find_binary_file and it is
+# located at aws-fpga/SDAccel/xilinx/libs/xcl2/xcl2.cpp
+runtime_dir = $(abspath .)/runtime
+fixme_xilinx_name_format = $(kernel_name).hw.xilinx_aws-vu9p-f1_4ddr-xpr-2pr_4_0
 
 kernel_name = vadd
 host_name = host
 
 default: $(out_dir)/$(kernel_name).xclbin
 
-build_host: $(out_dir)/$(host_name) $(run_dir)/$(fixme_xilinx_name_format).awsxclbin
+host_build: $(runtime_dir)/$(host_name)
 
-$(run_dir)/$(host_name): $(src_dir)/$(host_name).cpp
+$(runtime_dir)/$(host_name): $(src_dir)/host.cpp | $(runtime_dir) $(aws_fpga_dir)
 	xcpp -Wall -O0 -g \
 	-I$(XILINX_SDX)/runtime/include/1_2 \
 	-I$(aws_fpga_dir)/SDAccel/examples/xilinx/libs/xcl2 \
@@ -37,13 +43,7 @@ $(run_dir)/$(host_name): $(src_dir)/$(host_name).cpp
 	$(aws_fpga_dir)/SDAccel/examples/xilinx/libs/xcl2/xcl2.cpp \
 	$<
 
-# FIXME
-
-fixme_xilinx_name_format = $(kernel_name).hw.xilinx_aws-vu9p-f1_4ddr-xpr-2pr_4_0
-
-$(run_dir)/$(fixme_xilinx_name_format).awsxclbin: $(out_dir)/$(kernel_name).awsxclbin
-	cp $< $@
-
+# get afi-id from text file
 afi_id = $(shell cat $(shell ls -t *_afi_id.txt | head -n 1) | sed -nr "s/.*(afi-[0-9a-zA-Z]*).*/\1/p")
 
 afi_status:
@@ -52,15 +52,17 @@ afi_status:
 afi_delete:
 	aws ec2 --region us-west-2 delete-fpga-image --fpga-image-id $(afi_id)
 
-afi: $(out_dir)/$(kernel_name).awsxclbin
-
-$(out_dir)/$(kernel_name).awsxclbin: $(out_dir)/$(kernel_name).xclbin
+afi_build: $(out_dir)/$(kernel_name).xclbin
 	$(aws_fpga_dir)/SDAccel/tools/create_sdaccel_afi.sh \
 	-xclbin=$< \
 	-o=$(out_dir)/$(kernel_name) \
 	-s3_bucket=$(bucket_name) \
 	-s3_dcp_key=$(bucket_dir) \
 	-s3_logs_key=$(bucket_dir)/afi.log
+	cp $(out_dir)/$(kernel_name).awsxclbin $(runtime_dir)/$(fixme_xilinx_name_format).awsxclbin
+
+$(runtime_dir):
+	mkdir -p $@
 
 # xocc compile options
 # -c compile mode
@@ -97,5 +99,11 @@ $(aws_fpga_dir):
 	cd $@ && bash -c "source sdaccel_setup.sh"
 	cd $@ && bash -c "source hdk_setup.sh"
 
-clean:
-	-rm -rf *.dir $(run_dir) $(out_dir) *.txt *.tar *.bit *.bin *.xml to_aws $(aws_fpga_dir)
+clean_all: clean_xocc clean_afi
+	-rm -rf $(out_dir) $(aws_fpga_dir)
+
+clean_xocc:
+	-rm -rf *.dir
+
+clean_afi:
+	-rm -rf $(runtime_dir) *.txt *.tar *.bit *.bin *.xml to_aws
