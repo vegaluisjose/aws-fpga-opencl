@@ -52,7 +52,7 @@ afi_status:
 afi_delete:
 	aws ec2 --region us-west-2 delete-fpga-image --fpga-image-id $(afi_id)
 
-afi_build: $(out_dir)/$(kernel_name).xclbin
+afi_build: $(out_dir)/$(kernel_name).xclbin | $(runtime_dir) $(aws_fpga_dir)
 	$(aws_fpga_dir)/SDAccel/tools/create_sdaccel_afi.sh \
 	-xclbin=$< \
 	-o=$(out_dir)/$(kernel_name) \
