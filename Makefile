@@ -12,12 +12,19 @@ export AWS_FPGA_REPO_DIR = $(aws_fpga_dir)
 export HDK_DIR = $(aws_fpga_dir)/hdk
 export HDK_SHELL_DIR = $(aws_fpga_dir)/hdk/common/shell_stable
 
-# compile target: sw_emu, hw_emu, or hw
-target ?= hw
+ifeq ($(MAKECMDGOALS),sw_emu)
+target = sw_emu
+export LD_LIBRARY_PATH:=$(LD_LIBRARY_PATH):$(XILINX_SDX)/lib/lnx64.o
+export XCL_EMULATION_MODE=sw_emu
+else
+target = hw
+endif
+
 bucket_name ?= fbit
 bucket_dir ?= ocl
 
 out_dir = $(abspath .)/out
+sw_emu_dir = $(abspath .)/sw_emu
 src_dir = $(abspath .)/src
 
 # FIXME required for non-4ddr-systems, due to a xilinx-aws-bug in xcl2
@@ -31,6 +38,14 @@ kernel_name = vadd
 host_name = host
 
 default: $(out_dir)/$(kernel_name).xclbin
+
+.PHONY:sw_emu
+sw_emu: $(runtime_dir)/$(host_name) $(out_dir)/$(kernel_name).xclbin
+	mkdir -p $(sw_emu_dir)
+	cp $(runtime_dir)/$(host_name) $(sw_emu_dir)
+	cp $(out_dir)/$(kernel_name).xclbin $(sw_emu_dir)/$(kernel_name).sw_emu.$(aws_platform).xclbin
+	cd $(sw_emu_dir) && emconfigutil --platform $(aws_fpga_dir)/SDAccel/aws_platform/$(aws_platform)/$(aws_platform).xpfm --nd 1
+	cd $(sw_emu_dir) && ./$(host_name)
 
 host_build: $(runtime_dir)/$(host_name)
 
@@ -101,11 +116,22 @@ $(aws_fpga_dir):
 	cd $@ && bash -c "source sdaccel_setup.sh"
 	cd $@ && bash -c "source hdk_setup.sh"
 
-clean_all: clean_xocc clean_afi
-	-rm -rf $(out_dir) $(aws_fpga_dir)
+clean_all: clean_out clean_aws clean_sw_emu clean_xocc clean_runtime clean_afi
+
+clean_out:
+	-rm -rf $(out_dir)
+
+clean_aws:
+	-rm -rf $(aws_fpga_dir)
+
+clean_sw_emu:
+	-rm -rf $(sw_emu_dir)
 
 clean_xocc:
 	-rm -rf *.dir
 
+clean_runtime:
+	-rm -rf $(runtime_dir)
+
 clean_afi:
-	-rm -rf $(runtime_dir) *.txt *.tar *.bit *.bin *.xml to_aws
+	-rm -rf *.txt *.tar *.bit *.bin *.xml to_aws
