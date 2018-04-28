@@ -12,6 +12,8 @@ export AWS_FPGA_REPO_DIR = $(aws_fpga_dir)
 export HDK_DIR = $(aws_fpga_dir)/hdk
 export HDK_SHELL_DIR = $(aws_fpga_dir)/hdk/common/shell_stable
 
+# compile target: sw_emu, hw_emu, or hw
+target ?= hw
 bucket_name ?= fbit
 bucket_dir ?= ocl
 
@@ -75,7 +77,7 @@ $(runtime_dir):
 $(out_dir)/$(kernel_name).xclbin: $(out_dir)/$(kernel_name).xo
 	xocc -l -s \
 	--platform $(aws_fpga_dir)/SDAccel/aws_platform/$(aws_platform)/$(aws_platform).xpfm \
-	-t hw \
+	-t $(target) \
 	-o $@ \
 	--xp param:compiler.preserveHlsOutput=1 \
 	--xp param:compiler.generateExtraRunData=true \
@@ -85,7 +87,7 @@ $(out_dir)/$(kernel_name).xo: $(src_dir)/$(kernel_name).cpp | $(aws_fpga_dir)
 	mkdir -p $(dir $@)
 	xocc -c -s \
 	--platform $(aws_fpga_dir)/SDAccel/aws_platform/$(aws_platform)/$(aws_platform).xpfm \
-	-t hw \
+	-t $(target) \
 	-o $@ \
 	-k $(kernel_name) \
 	--xp param:compiler.preserveHlsOutput=1 \
