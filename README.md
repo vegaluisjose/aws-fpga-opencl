@@ -8,12 +8,12 @@ Few things:
 * Tested on Amazon FPGA AMI instace [1.3.5](https://aws.amazon.com/marketplace/pp/B06VVYBLZZ)
 * The host code is written in OpenCL
 * The kernel code is written in HLS (C/C++)
-* Makefile currently support software emulation and hardware build
+* Makefile currently support software emulation and hardware generation
 
-## sw_emu
+## Software emulation
 1. Run `make sw_emu`
 
-## hw
+## Hardware generation
 1. Run `make`
 2. Run `make afi_build`
 3. Wait until AFI become available, AFI status can be checked with `make afi_status`
