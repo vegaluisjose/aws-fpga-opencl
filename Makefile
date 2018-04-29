@@ -32,7 +32,7 @@ sw_emu: $(out_dir)/$(host_name) $(out_dir)/$(kernel_name).$(target).xclbin
 
 host_build: $(out_dir)/$(host_name)
 
-$(out_dir)/$(host_name): $(src_dir)/host.cpp | $(aws_fpga_dir) $(out_dir)
+$(out_dir)/$(host_name): $(src_dir)/$(host_name).cpp | $(aws_fpga_dir) $(out_dir)
 	xcpp -Wall -O0 -g \
 	-I$(XILINX_SDX)/runtime/include/1_2 \
 	-I$(aws_fpga_dir)/SDAccel/examples/xilinx/libs/xcl2 \
