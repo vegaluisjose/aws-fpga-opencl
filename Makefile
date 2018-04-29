@@ -1,9 +1,3 @@
-# flow
-# 1. Build xclbin - make
-# 2. Generate AFI - make afi_build
-# 3. Check AFI status - make afi_status
-# 4. Compile host code - make host_build
-
 aws_fpga_dir = $(abspath .)/aws-fpga
 aws_fpga_ver = b1ed5e951de3442ffb1fc8c7097e7064489e83f1
 aws_platform = xilinx_aws-vu9p-f1_1ddr-xpr-2pr_4_0
