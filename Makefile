@@ -23,12 +23,12 @@ src_dir = $(abspath .)/src
 kernel_name = vadd
 host_name = host
 
-default: $(out_dir)/$(host_name) $(out_dir)/$(kernel_name).xclbin
+default: $(out_dir)/$(host_name) $(out_dir)/$(kernel_name).$(target).xclbin
 
 .PHONY:sw_emu
-sw_emu: $(out_dir)/$(host_name) $(out_dir)/$(kernel_name).xclbin
+sw_emu: $(out_dir)/$(host_name) $(out_dir)/$(kernel_name).$(target).xclbin
 	cd $(out_dir) && emconfigutil --platform $(aws_fpga_dir)/SDAccel/aws_platform/$(aws_platform)/$(aws_platform).xpfm --nd 1
-	cd $(out_dir) && ./$(host_name) $(out_dir)/$(kernel_name).xclbin
+	cd $(out_dir) && ./$(host_name) $(out_dir)/$(kernel_name).$(target).xclbin
 
 host_build: $(out_dir)/$(host_name)
 
@@ -52,7 +52,7 @@ afi_status:
 afi_delete:
 	aws ec2 --region us-west-2 delete-fpga-image --fpga-image-id $(afi_id)
 
-afi_build: $(out_dir)/$(kernel_name).xclbin | $(aws_fpga_dir)
+afi_build: $(out_dir)/$(kernel_name).$(target).xclbin | $(aws_fpga_dir)
 	$(aws_fpga_dir)/SDAccel/tools/create_sdaccel_afi.sh \
 	-xclbin=$< \
 	-o=$(out_dir)/$(kernel_name) \
@@ -68,7 +68,7 @@ afi_build: $(out_dir)/$(kernel_name).xclbin | $(aws_fpga_dir)
 # -t compile target sw_emu, hw_wmu, or hw
 # -l link mode
 
-$(out_dir)/$(kernel_name).xclbin: $(out_dir)/$(kernel_name).xo
+$(out_dir)/$(kernel_name).$(target).xclbin: $(out_dir)/$(kernel_name).$(target).xo
 	xocc -l -s \
 	--platform $(aws_fpga_dir)/SDAccel/aws_platform/$(aws_platform)/$(aws_platform).xpfm \
 	-t $(target) \
@@ -77,7 +77,7 @@ $(out_dir)/$(kernel_name).xclbin: $(out_dir)/$(kernel_name).xo
 	--xp param:compiler.generateExtraRunData=true \
 	$<
 
-$(out_dir)/$(kernel_name).xo: $(src_dir)/$(kernel_name).cpp | $(aws_fpga_dir) $(out_dir)
+$(out_dir)/$(kernel_name).$(target).xo: $(src_dir)/$(kernel_name).cpp | $(aws_fpga_dir) $(out_dir)
 	xocc -c -s \
 	--platform $(aws_fpga_dir)/SDAccel/aws_platform/$(aws_platform)/$(aws_platform).xpfm \
 	-t $(target) \
