@@ -15,8 +15,8 @@ Few things:
 
 ## Hardware generation
 1. Run `make`
-2. Run `make afi_build`
-3. Wait until AFI become available, AFI status can be checked with `make afi_status`
-4. Switch or connect to the Amazon F1 instance
-5. Go to the `out` directory, `cd out`
-6. Run `./host vadd.awsxclbin`
+1. Run `make afi_build`
+1. Wait until AFI become available, AFI status can be checked with `make afi_status`
+1. Switch or connect to the Amazon F1 instance
+1. Go to the `out` directory, `cd out`
+1. Run `./host vadd.awsxclbin`
