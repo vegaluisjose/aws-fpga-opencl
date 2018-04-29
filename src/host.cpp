@@ -34,19 +34,30 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 int main(int argc, char** argv)
 {
+    // replace find_binary_file() with an argument (argc), because find_binary_file() requires
+    // certain filename format and location in order to work with host binary.
+    std::string xclbin;
+
+    if (argc < 1){
+        std::cerr << "Usage: ./<host-binary> <path-to-xclbin-or-awsxclbin>" << std::endl;
+        return 1;
+    } else {
+        xclbin = argv[1];
+    }
+
     size_t vector_size_bytes = sizeof(int) * DATA_SIZE;
     // Allocate Memory in Host Memory
-    // When creating a buffer with user pointer (CL_MEM_USE_HOST_PTR), under the hood user ptr 
+    // When creating a buffer with user pointer (CL_MEM_USE_HOST_PTR), under the hood user ptr
     // is used if it is properly aligned. when not aligned, runtime had no choice but to create
     // its own host side buffer. So it is recommended to use this allocator if user wish to
-    // create buffer using CL_MEM_USE_HOST_PTR to align user buffer to page boundary. It will 
-    // ensure that user buffer is used when user create Buffer/Mem object with CL_MEM_USE_HOST_PTR 
+    // create buffer using CL_MEM_USE_HOST_PTR to align user buffer to page boundary. It will
+    // ensure that user buffer is used when user create Buffer/Mem object with CL_MEM_USE_HOST_PTR
     std::vector<int,aligned_allocator<int>> source_in1(DATA_SIZE);
     std::vector<int,aligned_allocator<int>> source_in2(DATA_SIZE);
     std::vector<int,aligned_allocator<int>> source_hw_results(DATA_SIZE);
     std::vector<int,aligned_allocator<int>> source_sw_results(DATA_SIZE);
 
-    // Create the test data 
+    // Create the test data
     for(int i = 0 ; i < DATA_SIZE ; i++){
         source_in1[i] = rand() % DATA_SIZE;
         source_in2[i] = rand() % DATA_SIZE;
@@ -62,27 +73,23 @@ int main(int argc, char** argv)
 
     cl::Context context(device);
     cl::CommandQueue q(context, device, CL_QUEUE_PROFILING_ENABLE);
-    std::string device_name = device.getInfo<CL_DEVICE_NAME>(); 
-
-    // find_binary_file() is a utility API which will search the xclbin file for
-    // targeted mode (sw_emu/hw_emu/hw) and for targeted platforms.
-    std::string binaryFile = xcl::find_binary_file(device_name,"vadd");
+    std::string device_name = device.getInfo<CL_DEVICE_NAME>();
 
     // import_binary_file() ia a utility API which will load the binaryFile
     // and will return Binaries.
-    cl::Program::Binaries bins = xcl::import_binary_file(binaryFile);
+    cl::Program::Binaries bins = xcl::import_binary_file(xclbin);
     devices.resize(1);
     cl::Program program(context, devices, bins);
     cl::Kernel krnl_vector_add(program,"vadd");
 
     // Allocate Buffer in Global Memory
-    // Buffers are allocated using CL_MEM_USE_HOST_PTR for efficient memory and 
+    // Buffers are allocated using CL_MEM_USE_HOST_PTR for efficient memory and
     // Device-to-host communication
-    cl::Buffer buffer_in1   (context,CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, 
+    cl::Buffer buffer_in1   (context,CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY,
             vector_size_bytes, source_in1.data());
-    cl::Buffer buffer_in2   (context,CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY, 
+    cl::Buffer buffer_in2   (context,CL_MEM_USE_HOST_PTR | CL_MEM_READ_ONLY,
             vector_size_bytes, source_in2.data());
-    cl::Buffer buffer_output(context,CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY, 
+    cl::Buffer buffer_output(context,CL_MEM_USE_HOST_PTR | CL_MEM_WRITE_ONLY,
             vector_size_bytes, source_hw_results.data());
 
     // Copy input data to device global memory
@@ -116,6 +123,6 @@ int main(int argc, char** argv)
         }
     }
 
-    std::cout << "TEST " << (match ? "PASSED" : "FAILED") << std::endl; 
+    std::cout << "TEST " << (match ? "PASSED" : "FAILED") << std::endl;
     return (match ? EXIT_SUCCESS : EXIT_FAILURE);
 }
