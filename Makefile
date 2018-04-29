@@ -32,7 +32,7 @@ sw_emu: $(out_dir)/$(host_name) $(out_dir)/$(kernel_name).xclbin
 
 host_build: $(out_dir)/$(host_name)
 
-$(out_dir)/$(host_name): $(src_dir)/host.cpp | $(aws_fpga_dir)
+$(out_dir)/$(host_name): $(src_dir)/host.cpp | $(aws_fpga_dir) $(out_dir)
 	xcpp -Wall -O0 -g \
 	-I$(XILINX_SDX)/runtime/include/1_2 \
 	-I$(aws_fpga_dir)/SDAccel/examples/xilinx/libs/xcl2 \
@@ -77,8 +77,7 @@ $(out_dir)/$(kernel_name).xclbin: $(out_dir)/$(kernel_name).xo
 	--xp param:compiler.generateExtraRunData=true \
 	$<
 
-$(out_dir)/$(kernel_name).xo: $(src_dir)/$(kernel_name).cpp | $(aws_fpga_dir)
-	mkdir -p $(dir $@)
+$(out_dir)/$(kernel_name).xo: $(src_dir)/$(kernel_name).cpp | $(aws_fpga_dir) $(out_dir)
 	xocc -c -s \
 	--platform $(aws_fpga_dir)/SDAccel/aws_platform/$(aws_platform)/$(aws_platform).xpfm \
 	-t $(target) \
@@ -88,6 +87,9 @@ $(out_dir)/$(kernel_name).xo: $(src_dir)/$(kernel_name).cpp | $(aws_fpga_dir)
 	--xp param:compiler.generateExtraRunData=true \
 	$<
 
+$(out_dir):
+	mkdir -p $@
+
 # clone aws-fpga repository
 $(aws_fpga_dir):
 	git clone https://github.com/aws/aws-fpga.git $@
@@ -95,16 +97,13 @@ $(aws_fpga_dir):
 	cd $@ && bash -c "source sdaccel_setup.sh"
 	cd $@ && bash -c "source hdk_setup.sh"
 
-clean_all: clean_out clean_aws clean_sw_emu clean_xocc clean_afi
+clean_all: clean_out clean_aws clean_xocc clean_afi
 
 clean_out:
 	-rm -rf $(out_dir)
 
 clean_aws:
 	-rm -rf $(aws_fpga_dir)
-
-clean_sw_emu:
-	-rm -rf $(sw_emu_dir)
 
 clean_xocc:
 	-rm -rf *.dir
