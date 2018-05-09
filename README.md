@@ -12,3 +12,4 @@ Few things:
 ## Examples
 1. `vadd` vector addition
 1. `dataflow_loop` dataflow loop
+1. `dataflow_stream` dataflow stream
