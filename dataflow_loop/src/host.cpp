@@ -68,7 +68,6 @@ int main(int argc, char** argv)
     std::string device_name = device.getInfo<CL_DEVICE_NAME>();
 
     //Create Program and Kernel
-    std::string binaryFile = xcl::find_binary_file(device_name,"adder");
     cl::Program::Binaries bins = xcl::import_binary_file(xclbin);
     devices.resize(1);
     cl::Program program(context, devices, bins);
