@@ -1,4 +1,4 @@
-export AWS_FPGA_VERSION := b1ed5e951de3442ffb1fc8c7097e7064489e83f1
+export AWS_FPGA_VERSION := v1.3.7
 export AWS_FPGA_REPO_DIR := $(shell dirname $(abspath $(lastword $(MAKEFILE_LIST))))/aws-fpga
 export HDK_DIR := $(AWS_FPGA_REPO_DIR)/hdk
 export HDK_COMMON_DIR := $(HDK_DIR)/common
